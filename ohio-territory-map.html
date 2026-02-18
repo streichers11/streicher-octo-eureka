@@ -53,7 +53,7 @@
   .legend-swatch{width:14px;height:14px;border-radius:3px;border:1px solid rgba(0,0,0,.12);flex-shrink:0}
 
   /* INFO PANEL */
-  .info-panel{width:320px;background:var(--panel-bg);border-left:1px solid var(--border);display:flex;flex-direction:column;transition:transform .3s ease,opacity .3s ease;z-index:15;flex-shrink:0}
+  .info-panel{width:340px;background:var(--panel-bg);border-left:1px solid var(--border);display:flex;flex-direction:column;transition:transform .3s ease,opacity .3s ease;z-index:15;flex-shrink:0}
   .info-panel.collapsed{transform:translateX(100%);position:absolute;right:0;top:0;bottom:0;opacity:0;pointer-events:none}
   .info-panel-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
   .info-panel-header h2{font-size:.95rem;font-weight:600}
@@ -66,10 +66,22 @@
   .ip-section{margin-bottom:20px}
   .ip-section-label{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:6px;font-weight:600}
   .ip-manager-name{font-size:1.05rem;font-weight:600}
-  .ip-actions{display:flex;flex-direction:column;gap:8px;margin-top:20px}
-  .ip-actions button{display:flex;align-items:center;gap:8px;padding:8px 14px;background:#f8fafc;border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:.825rem;transition:background .15s}
-  .ip-actions button:hover{background:#f1f5f9}
+  .ip-manager-title{font-size:.8rem;color:var(--text-muted);margin-top:2px}
+  .ip-email{font-size:.85rem;color:var(--t1);margin-top:4px;word-break:break-all}
+  .ip-photo{width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--border)}
+  .ip-photo-fallback{width:80px;height:80px;border-radius:50%;border:3px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:700;color:#fff}
+  .ip-manager-card{display:flex;align-items:center;gap:16px;margin-bottom:16px}
+  .ip-manager-info{flex:1}
+  .ip-stat{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+  .ip-stat:last-child{border-bottom:none}
+  .ip-stat-label{font-size:.85rem;color:var(--text)}
+  .ip-stat-value{font-size:1rem;font-weight:700}
+  .ip-actions{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+  .ip-actions button,.ip-actions a{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;background:#f8fafc;border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:.825rem;transition:background .15s,opacity .15s;text-decoration:none;color:var(--text)}
+  .ip-actions button:hover,.ip-actions a:hover{background:#f1f5f9}
   .ip-actions button.copied{background:#ecfdf5;border-color:#86efac;color:#166534}
+  .ip-btn-meeting{background:var(--t1)!important;color:#fff!important;border-color:var(--t1)!important;font-weight:600!important}
+  .ip-btn-meeting:hover{opacity:.88!important;background:var(--t1)!important}
 
   /* TOOLTIP */
   .tooltip{position:fixed;pointer-events:none;background:rgba(15,23,42,.92);color:#fff;padding:8px 12px;border-radius:6px;font-size:.8rem;line-height:1.4;z-index:1000;max-width:220px;box-shadow:var(--shadow-lg);opacity:0;transition:opacity .12s}
@@ -103,7 +115,7 @@
   .county-path.search-highlight{stroke:#ef4444;stroke-width:3;filter:brightness(1.15)}
 
   /* COUNTY LABELS */
-  .county-label{font-size:3.2px;font-weight:600;fill:#fff;text-anchor:middle;dominant-baseline:central;pointer-events:none;paint-order:stroke;stroke:rgba(0,0,0,.45);stroke-width:.5px;stroke-linejoin:round}
+  .county-label{font-weight:700;fill:#fff;text-anchor:middle;dominant-baseline:central;pointer-events:none;paint-order:stroke;stroke:rgba(0,0,0,.35);stroke-width:.5px;stroke-linejoin:round}
 </style>
 </head>
 <body>
@@ -172,15 +184,48 @@
   "use strict";
 
   /* ──────────────────── DATA ──────────────────── */
-  const territoryToManager = {
-    T1: "Matt Hedden",
-    T2: "Brendan Scott",
-    T3: "Nicole Fracasso",
-    T4: "Lauren Simon"
+  const managerData = {
+    T1: {
+      name: "Matt Hedden",
+      title: "Central Ohio Membership Manager",
+      email: "mhedden@ohiorestaurant.org",
+      photo: "images/matt-hedden.jpg",
+      initials: "MH"
+    },
+    T2: {
+      name: "Brendan Scott",
+      title: "Northwest Ohio Membership Manager",
+      email: "bscott@ohiorestaurant.org",
+      photo: "images/brendan-scott.jpg",
+      initials: "BS"
+    },
+    T3: {
+      name: "Nicole Fracasso",
+      title: "Southwest Ohio Membership Manager",
+      email: "nfracasso@ohiorestaurant.org",
+      photo: "images/nicole-fracasso.jpg",
+      initials: "NF"
+    },
+    T4: {
+      name: "Lauren Simon",
+      title: "Northeast Ohio Membership Manager",
+      email: "lsimon@ohiorestaurant.org",
+      photo: "images/lauren-simon.jpg",
+      initials: "LS"
+    }
   };
+
+  // Backward-compat helper
+  const territoryToManager = {};
+  for (var k in managerData) territoryToManager[k] = managerData[k].name;
 
   const territoryColors = { T1: "#003479", T2: "#8320cb", T3: "#f19321", T4: "#ce3929" };
   const unassignedColor = "#cbd5e1";
+
+  // Food & drink location counts per county (placeholder — update with real data)
+  const countyFoodDrink = {
+    /* Example: "Franklin": 2345, "Cuyahoga": 3120 */
+  };
 
   // Authoritative county → territory mapping
   const countyToTerritory = {};
@@ -284,14 +329,26 @@
       .on("mouseleave", hideTooltip)
       .on("click", function(event, d) { selectCounty(d, this); });
 
-    // County labels
+    // County labels — dynamically sized to fill each county
     g.selectAll(".county-label")
       .data(ohioCounties.features)
       .join("text")
       .attr("class", "county-label")
       .attr("x", function(d) { return path.centroid(d)[0]; })
       .attr("y", function(d) { return path.centroid(d)[1]; })
-      .text(function(d) { return d.properties.name; });
+      .text(function(d) { return d.properties.name; })
+      .style("font-size", "10px")
+      .each(function(d) {
+        var bounds = path.bounds(d);
+        var countyW = (bounds[1][0] - bounds[0][0]) * 0.82;
+        var countyH = (bounds[1][1] - bounds[0][1]) * 0.38;
+        var textW = this.getComputedTextLength();
+        if (textW <= 0) return;
+        var scale = countyW / textW;
+        var fontSize = Math.min(10 * scale, countyH);
+        fontSize = Math.max(1.8, fontSize);
+        d3.select(this).style("font-size", fontSize + "px");
+      });
 
     // State outline
     if (ohioState) {
@@ -350,9 +407,22 @@
         var tr = projection.translate();
         projection.translate([tr[0] + 20, tr[1] + 20]);
         g.selectAll(".county-path").attr("d", path);
+        // Reposition and resize labels
         g.selectAll(".county-label")
           .attr("x", function(d) { return path.centroid(d)[0]; })
-          .attr("y", function(d) { return path.centroid(d)[1]; });
+          .attr("y", function(d) { return path.centroid(d)[1]; })
+          .style("font-size", "10px")
+          .each(function(d) {
+            var bounds = path.bounds(d);
+            var countyW = (bounds[1][0] - bounds[0][0]) * 0.82;
+            var countyH = (bounds[1][1] - bounds[0][1]) * 0.38;
+            var textW = this.getComputedTextLength();
+            if (textW <= 0) return;
+            var scale = countyW / textW;
+            var fontSize = Math.min(10 * scale, countyH);
+            fontSize = Math.max(1.8, fontSize);
+            d3.select(this).style("font-size", fontSize + "px");
+          });
         g.selectAll("path:last-child").attr("d", path);
         svg.call(zoom.transform, d3.zoomIdentity);
       }, 200);
@@ -365,7 +435,7 @@
     var territory = lookupTerritory(name);
     tooltip.querySelector(".tt-county").textContent = name + " County";
     tooltip.querySelector(".tt-territory").textContent = territory
-      ? territory + " — " + territoryToManager[territory]
+      ? territory + " — " + managerData[territory].name
       : "Unassigned";
     tooltip.classList.add("visible");
     moveTooltip(event);
@@ -397,27 +467,58 @@
 
     var name = d.properties.name;
     var territory = lookupTerritory(name);
-    var manager = territory ? territoryToManager[territory] : "Unassigned";
     var color = territory ? territoryColors[territory] : unassignedColor;
+    var mgr = territory ? managerData[territory] : null;
+    var foodDrink = countyFoodDrink[name];
+    var foodDrinkDisplay = (foodDrink != null) ? foodDrink.toLocaleString() : "—";
 
-    panelBody.innerHTML =
+    // Build photo element: try image, fallback to initials
+    var photoHtml;
+    if (mgr) {
+      photoHtml =
+        '<img class="ip-photo" src="' + escAttr(mgr.photo) + '" alt="' + escAttr(mgr.name) + '"' +
+        ' onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">' +
+        '<div class="ip-photo-fallback" style="display:none;background:' + color + '">' + escHtml(mgr.initials) + '</div>';
+    } else {
+      photoHtml = '<div class="ip-photo-fallback" style="background:' + color + '">?</div>';
+    }
+
+    var html =
       '<div class="ip-county-name">' + escHtml(name) + ' County</div>' +
       '<div class="ip-territory-badge" style="background:' + color + '">' +
-        '<span>' + (territory || "—") + '</span>' +
-      '</div>' +
-      '<div class="ip-section">' +
-        '<div class="ip-section-label">Membership Manager</div>' +
-        '<div class="ip-manager-name">' + escHtml(manager) + '</div>' +
-      '</div>' +
-      '<div class="ip-actions">' +
-        '<button onclick="copyText(\'' + escAttr(name + " County") + '\', this)">'+
-          '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' +
-          'Copy county name</button>' +
-        '<button onclick="copyText(\'' + escAttr(manager) + '\', this)">'+
-          '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' +
-          'Copy manager name</button>' +
+        '<span>' + (territory || "Unassigned") + '</span>' +
       '</div>';
 
+    if (mgr) {
+      html +=
+        '<div class="ip-manager-card">' +
+          photoHtml +
+          '<div class="ip-manager-info">' +
+            '<div class="ip-manager-name">' + escHtml(mgr.name) + '</div>' +
+            '<div class="ip-manager-title">' + escHtml(mgr.title) + '</div>' +
+            '<div class="ip-email">' + escHtml(mgr.email) + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="ip-actions">' +
+          '<button onclick="copyText(\'' + escAttr(mgr.email) + '\', this)">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' +
+            'Copy Email</button>' +
+          '<a class="ip-btn-meeting" href="mailto:' + encodeURIComponent(mgr.email) + '?subject=' + encodeURIComponent('Schedule a Meeting — ' + name + ' County') + '">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' +
+            'Schedule a Meeting</a>' +
+        '</div>';
+    }
+
+    html +=
+      '<div class="ip-section">' +
+        '<div class="ip-section-label">County Statistics</div>' +
+        '<div class="ip-stat">' +
+          '<span class="ip-stat-label">Food &amp; Drink Locations</span>' +
+          '<span class="ip-stat-value">' + foodDrinkDisplay + '</span>' +
+        '</div>' +
+      '</div>';
+
+    panelBody.innerHTML = html;
     infoPanel.classList.remove("collapsed");
   }
 
@@ -464,7 +565,7 @@
       var t = lookupTerritory(f.properties.name);
       return '<div class="sr-item" data-name="' + escAttr(f.properties.name) + '">' +
         '<span>' + highlightMatch(f.properties.name, q) + ' County</span>' +
-        '<span class="sr-territory">' + (t ? t + " — " + territoryToManager[t] : "Unassigned") + '</span>' +
+        '<span class="sr-territory">' + (t ? t + " — " + managerData[t].name : "Unassigned") + '</span>' +
         '</div>';
     }).join("");
 
