@@ -7,8 +7,8 @@
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   :root{
-    --t1:#3b82f6;--t2:#22c55e;--t3:#f59e0b;--t4:#8b5cf6;
-    --t1-light:#93bbfd;--t2-light:#86efac;--t3-light:#fcd34d;--t4-light:#c4b5fd;
+    --t1:#003479;--t2:#8320cb;--t3:#f19321;--t4:#ce3929;
+    --t1-light:#336ba6;--t2-light:#a85dda;--t3-light:#f5b160;--t4-light:#de6e63;
     --bg:#f8f9fa;--panel-bg:#ffffff;--text:#1e293b;--text-muted:#64748b;
     --border:#e2e8f0;--radius:8px;--shadow:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
     --shadow-lg:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -4px rgba(0,0,0,.1);
@@ -101,6 +101,9 @@
   .county-path:hover{stroke-width:2;filter:brightness(1.12)}
   .county-path.selected{stroke:#1e293b;stroke-width:2.5;filter:brightness(1.08)}
   .county-path.search-highlight{stroke:#ef4444;stroke-width:3;filter:brightness(1.15)}
+
+  /* COUNTY LABELS */
+  .county-label{font-size:3.2px;font-weight:600;fill:#fff;text-anchor:middle;dominant-baseline:central;pointer-events:none;paint-order:stroke;stroke:rgba(0,0,0,.45);stroke-width:.5px;stroke-linejoin:round}
 </style>
 </head>
 <body>
@@ -176,7 +179,7 @@
     T4: "Lauren Simon"
   };
 
-  const territoryColors = { T1: "#3b82f6", T2: "#22c55e", T3: "#f59e0b", T4: "#8b5cf6" };
+  const territoryColors = { T1: "#003479", T2: "#8320cb", T3: "#f19321", T4: "#ce3929" };
   const unassignedColor = "#cbd5e1";
 
   // Authoritative county → territory mapping
@@ -281,6 +284,15 @@
       .on("mouseleave", hideTooltip)
       .on("click", function(event, d) { selectCounty(d, this); });
 
+    // County labels
+    g.selectAll(".county-label")
+      .data(ohioCounties.features)
+      .join("text")
+      .attr("class", "county-label")
+      .attr("x", function(d) { return path.centroid(d)[0]; })
+      .attr("y", function(d) { return path.centroid(d)[1]; })
+      .text(function(d) { return d.properties.name; });
+
     // State outline
     if (ohioState) {
       g.append("path")
@@ -338,6 +350,9 @@
         var tr = projection.translate();
         projection.translate([tr[0] + 20, tr[1] + 20]);
         g.selectAll(".county-path").attr("d", path);
+        g.selectAll(".county-label")
+          .attr("x", function(d) { return path.centroid(d)[0]; })
+          .attr("y", function(d) { return path.centroid(d)[1]; });
         g.selectAll("path:last-child").attr("d", path);
         svg.call(zoom.transform, d3.zoomIdentity);
       }, 200);
