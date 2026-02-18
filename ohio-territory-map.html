@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ORHA Clickable Ohio Territory Map</title>
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --panel: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #d1d5db;
+      --t1: #1d4ed8;
+      --t2: #0f766e;
+      --t3: #c2410c;
+      --t4: #7c3aed;
+      --unassigned: #9ca3af;
+      --accent: #111827;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 1rem;
+      padding: 1rem;
+      max-width: 1400px;
+      margin: 0 auto;
+      min-height: 100vh;
+    }
+
+    .map-card,
+    .side-panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
+    }
+
+    .map-card {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.9rem 1rem;
+      border-bottom: 1px solid var(--border);
+      background: #fbfbfd;
+    }
+
+    .title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-right: auto;
+    }
+
+    .search-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    input[type="search"] {
+      min-width: 240px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.55rem 0.7rem;
+      font-size: 0.92rem;
+      background: #fff;
+      color: var(--text);
+    }
+
+    button {
+      border: 1px solid #cbd5e1;
+      background: #fff;
+      color: var(--accent);
+      border-radius: 10px;
+      padding: 0.5rem 0.7rem;
+      cursor: pointer;
+      font-size: 0.88rem;
+      font-weight: 600;
+      transition: all 120ms ease;
+    }
+
+    button:hover {
+      border-color: #94a3b8;
+      background: #f8fafc;
+    }
+
+    .legend {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.5rem 1rem;
+      padding: 0.8rem 1rem 0.95rem;
+      border-bottom: 1px solid var(--border);
+      background: #fff;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      font-size: 0.85rem;
+      color: #374151;
+    }
+
+    .swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      border: 1px solid rgba(0, 0, 0, 0.2);
+      flex-shrink: 0;
+    }
+
+    .map-wrap {
+      position: relative;
+      height: calc(100vh - 220px);
+      min-height: 500px;
+    }
+
+    svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: linear-gradient(180deg, #fdfdfd, #f7fafc);
+    }
+
+    .county {
+      stroke: #ffffff;
+      stroke-width: 1;
+      transition: filter 120ms ease, stroke-width 120ms ease;
+      cursor: pointer;
+    }
+
+    .county:hover {
+      stroke-width: 1.9;
+      filter: brightness(1.08);
+    }
+
+    .county.selected {
+      stroke: #111827;
+      stroke-width: 2.2;
+      filter: brightness(1.1);
+    }
+
+    .tooltip {
+      position: absolute;
+      pointer-events: none;
+      background: rgba(17, 24, 39, 0.95);
+      color: white;
+      font-size: 0.8rem;
+      line-height: 1.35;
+      padding: 0.45rem 0.55rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+      transform: translate(10px, 10px);
+      opacity: 0;
+      transition: opacity 100ms ease;
+      z-index: 8;
+      max-width: 240px;
+    }
+
+    .side-panel {
+      position: sticky;
+      top: 1rem;
+      padding: 1rem;
+      align-self: start;
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+      min-height: 220px;
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 750;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 104px 1fr;
+      gap: 0.4rem;
+      font-size: 0.9rem;
+    }
+
+    .label {
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+      margin-top: 0.2rem;
+    }
+
+    .muted-note {
+      color: var(--muted);
+      font-size: 0.88rem;
+      margin: 0;
+    }
+
+    @media (max-width: 980px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .side-panel {
+        position: static;
+      }
+
+      .map-wrap {
+        min-height: 420px;
+        height: 64vh;
+      }
+
+      .legend {
+        grid-template-columns: 1fr;
+      }
+
+      input[type="search"] {
+        min-width: 200px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="map-card" aria-label="Ohio territory map">
+      <div class="toolbar">
+        <div class="title">ORHA — Clickable Ohio Territory Map</div>
+        <div class="search-wrap">
+          <input id="countySearch" type="search" placeholder="Search county (e.g., Franklin)" aria-label="Search county" />
+          <button id="searchBtn" type="button">Find County</button>
+          <button id="resetBtn" type="button">Reset View</button>
+        </div>
+      </div>
+
+      <div id="legend" class="legend" aria-label="territory legend"></div>
+
+      <div class="map-wrap">
+        <svg id="mapSvg" role="img" aria-label="Interactive map of Ohio counties"></svg>
+        <div id="tooltip" class="tooltip" role="status" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <aside class="side-panel" aria-label="county details panel">
+      <h2 id="panelCounty" class="panel-title">Select a county</h2>
+      <div class="row"><div class="label">Territory</div><div id="panelTerritory">—</div></div>
+      <div class="row"><div class="label">Manager</div><div id="panelManager">—</div></div>
+      <div class="actions">
+        <button id="copyCountyBtn" type="button" disabled>Copy county name</button>
+        <button id="copyManagerBtn" type="button" disabled>Copy manager name</button>
+      </div>
+      <p class="muted-note">Tip: Hover for quick info, click any county to pin details here.</p>
+    </aside>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
+  <script>
+    const territoryToManager = {
+      T1: "Matt Hedden",
+      T2: "Brendan Scott",
+      T3: "Nicole Fracasso",
+      T4: "Lauren Simon"
+    };
+
+    const countyToTerritory = {
+      Delaware: "T1", Franklin: "T1", Licking: "T1", Fairfield: "T1", Perry: "T1", Hocking: "T1", Athens: "T1", Muskingum: "T1", Morgan: "T1", Washington: "T1",
+      Williams: "T2", Defiance: "T2", Paulding: "T2", "Van Wert": "T2", Mercer: "T2", Shelby: "T2", Auglaize: "T2", Allen: "T2", Putnam: "T2", Henry: "T2", Fulton: "T2", Lucas: "T2", Wood: "T2", Hancock: "T2", Hardin: "T2", Logan: "T2", Marion: "T2", Wyandot: "T2", Seneca: "T2", Sandusky: "T2", Ottawa: "T2", Erie: "T2", Huron: "T2", Crawford: "T2", Morrow: "T2", Knox: "T2", Richland: "T2", Ashland: "T2", Wayne: "T2", Holmes: "T2", Coshocton: "T2",
+      Miami: "T3", Champaign: "T3", Union: "T3", Preble: "T3", Montgomery: "T3", Clark: "T3", Madison: "T3", Greene: "T3", Fayette: "T3", Clinton: "T3", Pickaway: "T3", Warren: "T3", Butler: "T3", Ross: "T3", Hamilton: "T3", Clermont: "T3", Brown: "T3", Highland: "T3", Adams: "T3", Scioto: "T3", Lawrence: "T3", Jackson: "T3", Gallia: "T3", Pike: "T3", Vinton: "T3", Meigs: "T3", Darke: "T3",
+      Ashtabula: "T4", Lake: "T4", Geauga: "T4", Cuyahoga: "T4", Summit: "T4", Portage: "T4", Trumbull: "T4", Mahoning: "T4", Columbiana: "T4", Stark: "T4", Tuscarawas: "T4", Carroll: "T4", Jefferson: "T4", Harrison: "T4", Belmont: "T4", Monroe: "T4", Noble: "T4", Guernsey: "T4", Lorain: "T4", Medina: "T4"
+    };
+
+    const territoryColors = {
+      T1: "#1d4ed8",
+      T2: "#0f766e",
+      T3: "#c2410c",
+      T4: "#7c3aed",
+      UNASSIGNED: "#9ca3af"
+    };
+
+    const svg = d3.select("#mapSvg");
+    const g = svg.append("g");
+    const tooltip = d3.select("#tooltip");
+
+    const panelCounty = document.getElementById("panelCounty");
+    const panelTerritory = document.getElementById("panelTerritory");
+    const panelManager = document.getElementById("panelManager");
+    const copyCountyBtn = document.getElementById("copyCountyBtn");
+    const copyManagerBtn = document.getElementById("copyManagerBtn");
+
+    const searchInput = document.getElementById("countySearch");
+    const searchBtn = document.getElementById("searchBtn");
+    const resetBtn = document.getElementById("resetBtn");
+
+    let countyFeatures = [];
+    let countyByNormalizedName = new Map();
+    let selectedFeature = null;
+    let zoomBehavior;
+
+    function normalizeCountyName(name = "") {
+      return name
+        .trim()
+        .toLowerCase()
+        .replace(/\bsaint\b/g, "st")
+        .replace(/\bst\.?\b/g, "st")
+        .replace(/\s+/g, " ");
+    }
+
+    function territoryForCounty(countyName) {
+      const direct = countyToTerritory[countyName];
+      if (direct) return direct;
+      const normalized = normalizeCountyName(countyName);
+      for (const [key, territory] of Object.entries(countyToTerritory)) {
+        if (normalizeCountyName(key) === normalized) return territory;
+      }
+      return null;
+    }
+
+    function managerForTerritory(territory) {
+      return territoryToManager[territory] || "Unassigned";
+    }
+
+    function fillForCounty(countyName) {
+      const territory = territoryForCounty(countyName);
+      return territory ? territoryColors[territory] : territoryColors.UNASSIGNED;
+    }
+
+    function renderLegend() {
+      const legend = d3.select("#legend");
+      const items = ["T1", "T2", "T3", "T4"].map((territory) => ({
+        territory,
+        manager: territoryToManager[territory],
+        color: territoryColors[territory]
+      }));
+
+      const nodes = legend.selectAll(".legend-item").data(items).enter().append("div").attr("class", "legend-item");
+      nodes.append("span").attr("class", "swatch").style("background", (d) => d.color);
+      nodes.append("span").text((d) => `${d.territory} — ${d.manager}`);
+    }
+
+    function updatePanel(feature) {
+      if (!feature) {
+        panelCounty.textContent = "Select a county";
+        panelTerritory.textContent = "—";
+        panelManager.textContent = "—";
+        copyCountyBtn.disabled = true;
+        copyManagerBtn.disabled = true;
+        return;
+      }
+
+      const county = feature.properties.name;
+      const territory = territoryForCounty(county) || "Unassigned";
+      const manager = managerForTerritory(territory);
+
+      panelCounty.textContent = county;
+      panelTerritory.textContent = territory;
+      panelManager.textContent = manager;
+
+      copyCountyBtn.disabled = false;
+      copyManagerBtn.disabled = manager === "Unassigned";
+
+      copyCountyBtn.onclick = () => navigator.clipboard?.writeText(county);
+      copyManagerBtn.onclick = () => navigator.clipboard?.writeText(manager);
+    }
+
+    function attachZoom(width, height) {
+      zoomBehavior = d3.zoom()
+        .scaleExtent([1, 8])
+        .translateExtent([[0, 0], [width, height]])
+        .on("zoom", (event) => {
+          g.attr("transform", event.transform);
+        });
+
+      svg.call(zoomBehavior);
+    }
+
+    function zoomToFeature(path, feature, width, height) {
+      const [[x0, y0], [x1, y1]] = path.bounds(feature);
+      const dx = x1 - x0;
+      const dy = y1 - y0;
+      const x = (x0 + x1) / 2;
+      const y = (y0 + y1) / 2;
+      const scale = Math.max(1, Math.min(8, 0.85 / Math.max(dx / width, dy / height)));
+      const translate = [width / 2 - scale * x, height / 2 - scale * y];
+
+      svg.transition().duration(650)
+        .call(zoomBehavior.transform, d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale));
+    }
+
+    function resetView() {
+      svg.transition().duration(550).call(zoomBehavior.transform, d3.zoomIdentity);
+      selectedFeature = null;
+      g.selectAll(".county").classed("selected", false);
+      updatePanel(null);
+    }
+
+    function renderMap(ohioCounties) {
+      countyFeatures = ohioCounties.features;
+      countyByNormalizedName = new Map(
+        countyFeatures.map((f) => [normalizeCountyName(f.properties.name), f])
+      );
+
+      const width = svg.node().clientWidth;
+      const height = svg.node().clientHeight;
+
+      const projection = d3.geoMercator();
+      const path = d3.geoPath(projection);
+      projection.fitSize([width, height], ohioCounties);
+
+      attachZoom(width, height);
+
+      const counties = g.selectAll("path")
+        .data(countyFeatures)
+        .enter()
+        .append("path")
+        .attr("class", "county")
+        .attr("d", path)
+        .attr("fill", (d) => fillForCounty(d.properties.name))
+        .on("mousemove", (event, d) => {
+          const county = d.properties.name;
+          const territory = territoryForCounty(county) || "Unassigned";
+          const manager = managerForTerritory(territory);
+          tooltip
+            .style("opacity", 1)
+            .style("left", `${event.offsetX}px`)
+            .style("top", `${event.offsetY}px`)
+            .html(`<strong>${county}</strong><br>Territory: ${territory}<br>Manager: ${manager}`);
+        })
+        .on("mouseleave", () => tooltip.style("opacity", 0))
+        .on("click", (event, d) => {
+          selectedFeature = d;
+          counties.classed("selected", (c) => c === d);
+          updatePanel(d);
+          zoomToFeature(path, d, width, height);
+        });
+
+      searchBtn.addEventListener("click", () => {
+        const raw = searchInput.value;
+        if (!raw) return;
+        const target = countyByNormalizedName.get(normalizeCountyName(raw));
+        if (!target) {
+          alert("County not found. Please check spelling.");
+          return;
+        }
+        selectedFeature = target;
+        counties.classed("selected", (c) => c === target);
+        updatePanel(target);
+        zoomToFeature(path, target, width, height);
+      });
+
+      searchInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") searchBtn.click();
+      });
+
+      resetBtn.addEventListener("click", resetView);
+    }
+
+    async function load() {
+      renderLegend();
+
+      try {
+        const [topology, countyNameRows] = await Promise.all([
+          d3.json("https://cdn.jsdelivr.net/npm/us-atlas@3/counties-10m.json"),
+          d3.csv("https://raw.githubusercontent.com/kjhealy/fips-codes/master/state_and_county_fips_master.csv")
+        ]);
+
+        const allCounties = topojson.feature(topology, topology.objects.counties).features;
+
+        const ohioNameByFips = new Map(
+          countyNameRows
+            .filter((row) => row.state === "OH" && row.fips)
+            .map((row) => {
+              const fips = String(row.fips).padStart(5, "0");
+              const cleanName = row.name.replace(/\s+County$/i, "").trim();
+              return [fips, cleanName];
+            })
+        );
+
+        const ohioFeatures = allCounties
+          .filter((feature) => String(feature.id).padStart(5, "0").startsWith("39"))
+          .map((feature) => {
+            const fips = String(feature.id).padStart(5, "0");
+            const countyName = ohioNameByFips.get(fips) || `FIPS ${fips}`;
+            return {
+              ...feature,
+              properties: {
+                ...(feature.properties || {}),
+                name: countyName,
+                fips
+              }
+            };
+          });
+
+        renderMap({ type: "FeatureCollection", features: ohioFeatures });
+      } catch (error) {
+        console.error(error);
+        alert("Failed to load map data. Please check your internet connection and refresh.");
+      }
+    }
+
+    load();
+  </script>
+</body>
+</html>
