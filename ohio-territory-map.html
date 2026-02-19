@@ -222,9 +222,26 @@
   const territoryColors = { T1: "#003479", T2: "#8320cb", T3: "#f19321", T4: "#ce3929" };
   const unassignedColor = "#cbd5e1";
 
-  // Food & drink location counts per county (placeholder — update with real data)
+  // Food & drink location counts per county
   const countyFoodDrink = {
-    /* Example: "Franklin": 2345, "Cuyahoga": 3120 */
+    "Adams":34,"Allen":216,"Ashland":81,"Ashtabula":211,"Athens":130,
+    "Auglaize":93,"Belmont":126,"Brown":56,"Butler":747,"Carroll":41,
+    "Champaign":57,"Clark":214,"Clermont":380,"Clinton":66,"Columbiana":149,
+    "Coshocton":46,"Crawford":79,"Cuyahoga":3101,"Darke":85,"Defiance":84,
+    "Delaware":511,"Erie":241,"Fairfield":280,"Fayette":64,"Franklin":3184,
+    "Fulton":73,"Gallia":49,"Geauga":177,"Greene":355,"Guernsey":75,
+    "Hamilton":2089,"Hancock":173,"Hardin":42,"Harrison":21,"Henry":45,
+    "Highland":62,"Hocking":46,"Holmes":52,"Huron":107,"Jackson":55,
+    "Jefferson":111,"Knox":93,"Lake":584,"Lawrence":71,"Licking":335,
+    "Logan":95,"Lorain":535,"Lucas":1040,"Madison":72,"Mahoning":558,
+    "Marion":103,"Medina":312,"Meigs":27,"Mercer":87,"Miami":205,
+    "Monroe":22,"Montgomery":415,"Morgan":16,"Morrow":31,"Muskingum":168,
+    "Noble":18,"Ottawa":151,"Paulding":24,"Perry":53,"Pickaway":80,
+    "Pike":44,"Portage":316,"Preble":55,"Putnam":66,"Richland":224,
+    "Ross":135,"Sandusky":123,"Scioto":127,"Seneca":99,"Shelby":80,
+    "Stark":785,"Summit":1215,"Trumbull":397,"Tuscarawas":205,"Union":88,
+    "Van Wert":51,"Vinton":20,"Warren":415,"Washington":109,"Wayne":183,
+    "Williams":68,"Wood":297,"Wyandot":46
   };
 
   // Authoritative county → territory mapping
@@ -329,7 +346,8 @@
       .on("mouseleave", hideTooltip)
       .on("click", function(event, d) { selectCounty(d, this); });
 
-    // County labels — dynamically sized to fill each county
+    // County labels — tilted, sized to fit within each county
+    var LABEL_ANGLE = -30;
     g.selectAll(".county-label")
       .data(ohioCounties.features)
       .join("text")
@@ -337,16 +355,24 @@
       .attr("x", function(d) { return path.centroid(d)[0]; })
       .attr("y", function(d) { return path.centroid(d)[1]; })
       .text(function(d) { return d.properties.name; })
+      .attr("transform", function(d) {
+        var c = path.centroid(d);
+        return "rotate(" + LABEL_ANGLE + "," + c[0] + "," + c[1] + ")";
+      })
       .style("font-size", "10px")
       .each(function(d) {
         var bounds = path.bounds(d);
-        var countyW = (bounds[1][0] - bounds[0][0]) * 0.82;
-        var countyH = (bounds[1][1] - bounds[0][1]) * 0.38;
+        var w = bounds[1][0] - bounds[0][0];
+        var h = bounds[1][1] - bounds[0][1];
+        // Diagonal available space with tilt
+        var rad = Math.abs(LABEL_ANGLE) * Math.PI / 180;
+        var diagW = (w * Math.cos(rad) + h * Math.sin(rad)) * 0.7;
+        var diagH = (w * Math.sin(rad) + h * Math.cos(rad)) * 0.28;
         var textW = this.getComputedTextLength();
         if (textW <= 0) return;
-        var scale = countyW / textW;
-        var fontSize = Math.min(10 * scale, countyH);
-        fontSize = Math.max(1.8, fontSize);
+        var scale = diagW / textW;
+        var fontSize = Math.min(10 * scale, diagH);
+        fontSize = Math.max(1.5, fontSize);
         d3.select(this).style("font-size", fontSize + "px");
       });
 
@@ -411,16 +437,23 @@
         g.selectAll(".county-label")
           .attr("x", function(d) { return path.centroid(d)[0]; })
           .attr("y", function(d) { return path.centroid(d)[1]; })
+          .attr("transform", function(d) {
+            var c = path.centroid(d);
+            return "rotate(" + LABEL_ANGLE + "," + c[0] + "," + c[1] + ")";
+          })
           .style("font-size", "10px")
           .each(function(d) {
             var bounds = path.bounds(d);
-            var countyW = (bounds[1][0] - bounds[0][0]) * 0.82;
-            var countyH = (bounds[1][1] - bounds[0][1]) * 0.38;
+            var bw = bounds[1][0] - bounds[0][0];
+            var bh = bounds[1][1] - bounds[0][1];
+            var rad = Math.abs(LABEL_ANGLE) * Math.PI / 180;
+            var diagW = (bw * Math.cos(rad) + bh * Math.sin(rad)) * 0.7;
+            var diagH = (bw * Math.sin(rad) + bh * Math.cos(rad)) * 0.28;
             var textW = this.getComputedTextLength();
             if (textW <= 0) return;
-            var scale = countyW / textW;
-            var fontSize = Math.min(10 * scale, countyH);
-            fontSize = Math.max(1.8, fontSize);
+            var scale = diagW / textW;
+            var fontSize = Math.min(10 * scale, diagH);
+            fontSize = Math.max(1.5, fontSize);
             d3.select(this).style("font-size", fontSize + "px");
           });
         g.selectAll("path:last-child").attr("d", path);
@@ -472,13 +505,13 @@
     var foodDrink = countyFoodDrink[name];
     var foodDrinkDisplay = (foodDrink != null) ? foodDrink.toLocaleString() : "—";
 
-    // Build photo element: try image, fallback to initials
+    // Build photo element: show initials by default, swap to photo on successful load
     var photoHtml;
     if (mgr) {
       photoHtml =
         '<img class="ip-photo" src="' + escAttr(mgr.photo) + '" alt="' + escAttr(mgr.name) + '"' +
-        ' onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">' +
-        '<div class="ip-photo-fallback" style="display:none;background:' + color + '">' + escHtml(mgr.initials) + '</div>';
+        ' style="display:none" onload="this.style.display=\'\';this.nextElementSibling.style.display=\'none\'">' +
+        '<div class="ip-photo-fallback" style="background:' + color + '">' + escHtml(mgr.initials) + '</div>';
     } else {
       photoHtml = '<div class="ip-photo-fallback" style="background:' + color + '">?</div>';
     }
