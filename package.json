@@ -1,0 +1,16 @@
+{
+  "name": "orha-money-retention-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ORHA Money & Retention Dashboard - Teams Tab Application",
+  "scripts": {
+    "install:all": "cd tabs && npm install && cd ../api && npm install",
+    "dev": "concurrently \"cd api && npm run dev\" \"cd tabs && npm start\"",
+    "build": "cd api && npm run build && cd ../tabs && npm run build",
+    "test": "cd api && npm test",
+    "test:all": "cd api && npm test"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

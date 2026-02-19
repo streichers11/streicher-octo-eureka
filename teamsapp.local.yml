@@ -1,0 +1,38 @@
+# Teams Toolkit local development configuration
+version: 1.1.0
+
+provision:
+  - uses: teamsApp/create
+    with:
+      name: ORHA Dashboard-local
+    writeToEnvironmentFile:
+      teamsAppId: TEAMS_APP_ID
+
+deploy:
+  - uses: devTool/install
+    with:
+      devCert:
+        trust: true
+    writeToEnvironmentFile:
+      sslCertFile: SSL_CRT_FILE
+      sslKeyFile: SSL_KEY_FILE
+
+  - uses: file/createOrUpdateEnvironmentFile
+    with:
+      target: ./tabs/.env.development.local
+      envs:
+        BROWSER: none
+        HTTPS: true
+        SSL_CRT_FILE: ${{SSL_CRT_FILE}}
+        SSL_KEY_FILE: ${{SSL_KEY_FILE}}
+        REACT_APP_API_URL: http://localhost:3001/api
+
+  - uses: cli/runNpmCommand
+    with:
+      workingDirectory: ./tabs
+      args: install
+
+  - uses: cli/runNpmCommand
+    with:
+      workingDirectory: ./api
+      args: install

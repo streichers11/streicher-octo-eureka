@@ -1,0 +1,52 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/teams/v1.16/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.16",
+  "version": "1.0.0",
+  "id": "{{APP_ID}}",
+  "developer": {
+    "name": "ORHA",
+    "websiteUrl": "https://{{TAB_DOMAIN}}",
+    "privacyUrl": "https://{{TAB_DOMAIN}}/privacy",
+    "termsOfUseUrl": "https://{{TAB_DOMAIN}}/terms"
+  },
+  "name": {
+    "short": "ORHA Dashboard",
+    "full": "ORHA Money & Retention Dashboard"
+  },
+  "description": {
+    "short": "Track membership money and retention for ORHA territories",
+    "full": "Upload GrowthZone Excel exports weekly to see an executive-friendly dashboard for money vs budget and retention by territory. Supports restaurant dues, vendor program dues, and manual adjustments."
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "accentColor": "#6264A7",
+  "staticTabs": [
+    {
+      "entityId": "dashboard",
+      "name": "Dashboard",
+      "contentUrl": "https://{{TAB_DOMAIN}}/",
+      "scopes": ["personal"]
+    },
+    {
+      "entityId": "admin",
+      "name": "Admin",
+      "contentUrl": "https://{{TAB_DOMAIN}}/admin",
+      "scopes": ["personal"]
+    }
+  ],
+  "configurableTabs": [
+    {
+      "configurationUrl": "https://{{TAB_DOMAIN}}/",
+      "canUpdateConfiguration": true,
+      "scopes": ["team", "groupChat"]
+    }
+  ],
+  "permissions": ["identity", "messageTeamMembers"],
+  "validDomains": ["{{TAB_DOMAIN}}"],
+  "webApplicationInfo": {
+    "id": "{{AZURE_CLIENT_ID}}",
+    "resource": "api://{{TAB_DOMAIN}}/{{AZURE_CLIENT_ID}}"
+  }
+}

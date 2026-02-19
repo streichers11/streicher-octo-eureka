@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+tabs/build/
+
+# Data directory (local dev data)
+api/data/
+
+# Environment files with secrets
+.env.local
+.env.production
+.env.*.local
+
+# IDE
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Teams Toolkit
+.fx/
+build/
+.deployment/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+Thumbs.db

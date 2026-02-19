@@ -1,0 +1,31 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch API",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/api/src/index.ts",
+      "runtimeArgs": ["-r", "ts-node/register"],
+      "env": {
+        "NODE_ENV": "development",
+        "API_PORT": "3001"
+      },
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Launch Tab (Chrome)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "https://localhost:3000",
+      "webRoot": "${workspaceFolder}/tabs/src"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Full Stack",
+      "configurations": ["Launch API", "Launch Tab (Chrome)"]
+    }
+  ]
+}
