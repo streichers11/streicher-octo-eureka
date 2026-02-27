@@ -115,7 +115,7 @@
   .county-path.search-highlight{stroke:#ef4444;stroke-width:3;filter:brightness(1.15)}
 
   /* COUNTY LABELS */
-  .county-label{font-weight:700;fill:#fff;text-anchor:middle;dominant-baseline:central;pointer-events:none;paint-order:stroke;stroke:rgba(0,0,0,.35);stroke-width:.5px;stroke-linejoin:round}
+  .county-label{font-weight:700;fill:#fff;text-anchor:middle;dominant-baseline:central;pointer-events:none;paint-order:stroke;stroke:rgba(0,0,0,.3);stroke-width:.4px;stroke-linejoin:round}
 </style>
 </head>
 <body>
@@ -346,8 +346,7 @@
       .on("mouseleave", hideTooltip)
       .on("click", function(event, d) { selectCounty(d, this); });
 
-    // County labels — tilted, sized to fit within each county
-    var LABEL_ANGLE = -35;
+    // County labels — stretched to fill county width using textLength
     g.selectAll(".county-label")
       .data(ohioCounties.features)
       .join("text")
@@ -355,22 +354,17 @@
       .attr("x", function(d) { return path.centroid(d)[0]; })
       .attr("y", function(d) { return path.centroid(d)[1]; })
       .text(function(d) { return d.properties.name; })
-      .attr("transform", function(d) {
-        var c = path.centroid(d);
-        return "rotate(" + LABEL_ANGLE + "," + c[0] + "," + c[1] + ")";
-      })
-      .style("font-size", "10px")
       .each(function(d) {
         var bounds = path.bounds(d);
         var w = bounds[1][0] - bounds[0][0];
         var h = bounds[1][1] - bounds[0][1];
-        // Use the shorter dimension to keep text inside
-        var fitW = Math.min(w, h) * 0.9;
-        var textW = this.getComputedTextLength();
-        if (textW <= 0) return;
-        var fontSize = Math.min(10 * (fitW / textW), Math.min(w, h) * 0.22);
-        fontSize = Math.max(1.2, Math.min(fontSize, 5));
-        d3.select(this).style("font-size", fontSize + "px");
+        var targetW = w * 0.82;
+        var fontSize = h * 0.24;
+        fontSize = Math.max(1.5, Math.min(fontSize, 7));
+        d3.select(this)
+          .style("font-size", fontSize + "px")
+          .attr("textLength", targetW)
+          .attr("lengthAdjust", "spacingAndGlyphs");
       });
 
     // State outline
@@ -434,21 +428,17 @@
         g.selectAll(".county-label")
           .attr("x", function(d) { return path.centroid(d)[0]; })
           .attr("y", function(d) { return path.centroid(d)[1]; })
-          .attr("transform", function(d) {
-            var c = path.centroid(d);
-            return "rotate(" + LABEL_ANGLE + "," + c[0] + "," + c[1] + ")";
-          })
-          .style("font-size", "10px")
           .each(function(d) {
             var bounds = path.bounds(d);
             var bw = bounds[1][0] - bounds[0][0];
             var bh = bounds[1][1] - bounds[0][1];
-            var fitW = Math.min(bw, bh) * 0.9;
-            var textW = this.getComputedTextLength();
-            if (textW <= 0) return;
-            var fontSize = Math.min(10 * (fitW / textW), Math.min(bw, bh) * 0.22);
-            fontSize = Math.max(1.2, Math.min(fontSize, 5));
-            d3.select(this).style("font-size", fontSize + "px");
+            var targetW = bw * 0.82;
+            var fontSize = bh * 0.24;
+            fontSize = Math.max(1.5, Math.min(fontSize, 7));
+            d3.select(this)
+              .style("font-size", fontSize + "px")
+              .attr("textLength", targetW)
+              .attr("lengthAdjust", "spacingAndGlyphs");
           });
         g.selectAll("path:last-child").attr("d", path);
         svg.call(zoom.transform, d3.zoomIdentity);
